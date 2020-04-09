@@ -119,21 +119,21 @@ package com.vconsulte.sij.splitter;
 	import java.io.BufferedWriter;
 	import java.io.File;
 	import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
+	import java.io.FileOutputStream;
+	import java.io.FileWriter;
 	import java.io.IOException;
 	import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+	import java.io.OutputStreamWriter;
+	import java.io.PrintWriter;
+	import java.text.ParseException;
+	import java.text.SimpleDateFormat;
 	import java.util.ArrayList;
 	import java.util.Calendar;
 	import java.util.Collection;
 	import java.util.Date;
 	import java.util.List;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+	import java.nio.charset.StandardCharsets;
+	import java.nio.file.*;
 	import javax.swing.JFileChooser;
 	import javax.swing.JOptionPane;
 
@@ -145,11 +145,12 @@ import java.nio.file.*;
 
 	import com.vconsulte.sij.base.Base;
 	import com.vconsulte.sij.base.Edital;
-import com.vconsulte.sij.base.GravaXml;
-import com.vconsulte.sij.base.InterfaceServidor;
+	import com.vconsulte.sij.base.GravaXml;
+	import com.vconsulte.sij.base.InterfaceServidor;
 	import com.vconsulte.sij.base.MsgWindow;
-import com.vconsulte.sij.splitter.IndiceEdicao;
-	import com.vconsulte.sij.PDF.*;
+	import com.vconsulte.sij.splitter.IndiceEdicao;
+	import com.vconsulte.sij.base.SalvaPdf;
+
 	
 public class SplitDO  {
 		
@@ -1869,7 +1870,7 @@ public class SplitDO  {
     	base.setFileName(nomeFile);
     	
 		SalvaPdf.gravaPdf();
-		gravaXml.main();
+		GravaXml.main();
     		
     	gravaLog("grv -> " + sequencialSaida + " / " + secao + " / " + grupo + " / " + assunto + " / " + processo);
     	gravaLog(".................... FIM ................................ "+ sequencialSaida);
