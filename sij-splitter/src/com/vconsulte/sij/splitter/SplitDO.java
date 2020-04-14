@@ -119,21 +119,21 @@ package com.vconsulte.sij.splitter;
 	import java.io.BufferedWriter;
 	import java.io.File;
 	import java.io.FileInputStream;
-	import java.io.FileOutputStream;
-	import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 	import java.io.IOException;
 	import java.io.InputStreamReader;
-	import java.io.OutputStreamWriter;
-	import java.io.PrintWriter;
-	import java.text.ParseException;
-	import java.text.SimpleDateFormat;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 	import java.util.ArrayList;
 	import java.util.Calendar;
 	import java.util.Collection;
 	import java.util.Date;
 	import java.util.List;
-	import java.nio.charset.StandardCharsets;
-	import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 	import javax.swing.JFileChooser;
 	import javax.swing.JOptionPane;
 
@@ -143,14 +143,8 @@ package com.vconsulte.sij.splitter;
 	import org.apache.pdfbox.pdmodel.PDDocument;
 	import org.apache.pdfbox.text.PDFTextStripper;
 
-	import com.vconsulte.sij.base.Base;
-	import com.vconsulte.sij.base.Edital;
-	import com.vconsulte.sij.base.GravaXml;
-	import com.vconsulte.sij.base.InterfaceServidor;
-	import com.vconsulte.sij.base.MsgWindow;
 	import com.vconsulte.sij.splitter.IndiceEdicao;
-	import com.vconsulte.sij.base.SalvaPdf;
-
+	import com.vconsulte.sij.base.*;
 	
 public class SplitDO  {
 		
@@ -372,7 +366,7 @@ public class SplitDO  {
     			limiteGrupo = localizaProximoGrupo(sequencial);
     			quebraPorAssunto = false;
     			
-    			if(sequencial >= 99176) {
+    			if(sequencial >= 97948) {
         			k++;
 	        	}
     			
@@ -389,17 +383,17 @@ public class SplitDO  {
 	        			gravaLog(".................... INICIO .............................");
 	        		}
 
-	        		gravaLog("--- >> " + sequencial + " - " + linha );
+	        		gravaLog("\t\t\t" + "--- >> " + sequencial + " - " + linha );
 	        		
 	        	//	System.out.println(sequencial + " - " + linha);
 	        		
-	        		if(sequencial >= 177871) {
+	        		if(sequencial >= 97948) {
 	        			k++;
 	        		}
 	        		
-	        		if(sequencial >= 177876) {
+	        		if(sequencial >= 99742) {
 	        			k++;
-		        	}
+	        		}
 
 					/*	
 					 * Quebra por Assunto
@@ -565,7 +559,8 @@ public class SplitDO  {
 		meses.add("dezembro");
 		String linhaData = linha;
 		String dataFinal = "";
-		String dummy;
+		String dummy = "";
+		int num = 0;
 		int var = linhaData.split(" ", -1).length - 1;
 		String linhaDecomposta[] = new String[var];
 
@@ -575,17 +570,22 @@ public class SplitDO  {
 		linhaDecomposta = linhaData.split(" ");
 		if(linhaDecomposta.length >= 6) {
 			for(int i=0; i <= linhaDecomposta.length-1; i++) {
-				if(linhaDecomposta[i].length() >= 2 && ehInteiro(linhaDecomposta[i])) {
-					if(linhaDecomposta[i].length() >= 1 && linhaDecomposta[i].length() <= 12) {
-						if(dataFinal.isEmpty()) {
-							dataFinal = linhaDecomposta[i];
-						} else {
-							dataFinal = dataFinal + "-" + linhaDecomposta[i];
+				dummy = linhaDecomposta[i].replaceAll("[.,]","");
+				if(dummy.length() == 2) {
+					if(ehInteiro(dummy)) {
+						num = Integer.parseInt(dummy);
+						if((num >= 1 && num <= 31) || (num >= 1 && num <= 12)) {
+							if(dataFinal.isEmpty()) {
+								dataFinal = dummy;
+							} else {
+								dataFinal = dataFinal + "-" + dummy;
+							}
 						}
 					}
 				}
-				if(linhaDecomposta[i].length() == 4 && ehInteiro(linhaDecomposta[i])) {
-					dataFinal = dataFinal + "-" + linhaDecomposta[i];
+				if(dummy.length() == 4 && ehInteiro(dummy)) {
+					dataFinal = dataFinal + "-" + dummy;
+					break;
 				}
 				if(meses.contains(linhaDecomposta[i])) {
 					switch(linhaDecomposta[i]) {
@@ -721,8 +721,12 @@ public class SplitDO  {
 	public static boolean quebraAssunto(int indice, int limite) throws Exception {
 		int in = 0;
 		int fm = 0;
+		String dataInvertida = "";
+		String dta = "";
 		String dummy = "";
 		String linha = formataPalavra(carregaLinha(indice, false));
+		
+		
 
 		if(indice == sequencialGrupo) {														// já valida o 1º assunto do grupo
 			gravaLog("--- >> " + sequencial + " - quebra assunto");
@@ -738,6 +742,14 @@ public class SplitDO  {
 							if(linha.equals(tabelaAssuntos.get(i))) {																		
 								for(int x=indice; x>=linhaProcesso; x--) {						// regressivo a procura de intimados
 									dummy = formataPalavra(carregaLinha(x,false));
+									
+									
+									if(x <= 49657) {
+										k++;
+									}
+											
+									
+									
 									if(dummy.isEmpty()) {
 					        			continue;
 					        		}
@@ -748,8 +760,14 @@ public class SplitDO  {
 										gravaLog("--- >> " + sequencial + " - quebra assunto");
 										return true;
 									}
-									if(ehDataValida(obtemData(dummy))) {
-										return true;
+									dta = obtemData(dummy);
+									if(!dta.isEmpty()) {
+										if(ehDataValida(dta) && dta.length() == 10) {
+											dataInvertida = obtemData(dummy).substring(6, 10) + obtemData(dummy).substring(2, 5);
+											if(strEdicao.startsWith(dataInvertida)) {
+												return true;
+											}
+										}
 									}
 									if(dummy.equals("poder") || 
 											dummy.equals("judiciario") || 
@@ -1188,7 +1206,7 @@ public class SplitDO  {
 	public static void carregaDiario(File input){								
 
 	    String texto = "";
-		msgWindow.incluiLinha(obtemHrAtual() +" - Carregando do Diário Oficial - Aguarde ...");
+		msgWindow.incluiLinha(obtemHrAtual() +" - Carregando o Diário Oficial - Aguarde ...");
 		try {
 			PDDocument pd = PDDocument.load(input);
 	        PDFTextStripper stripper = new PDFTextStripper();  	           
@@ -1356,6 +1374,7 @@ public class SplitDO  {
 		String linhaBuffer = "";
 		String ultimaPalavra = "";
 		String complemento = "complemento";
+		char xx;
 
 		int pos = bufferEntrada.indexOf("SUMÁRIO")+1;
 		int ultimaLinha = pos-2;
@@ -1363,6 +1382,13 @@ public class SplitDO  {
 		if(pos > 0) {
 			while(pos <= bufferEntrada.size()-1) {
 				linhaBuffer = bufferEntrada.get(pos);
+				
+			//	System.out.println(pos + " - " + linhaBuffer);
+				
+				if(pos >= 574415) {
+					k++;
+				}
+				
 				if(!linhaBuffer.contains("Tribunal Regional do Trabalho d") && 
 					!linhaBuffer.contains("Data da Disponibilização:") &&
 					!linhaBuffer.contains("Código para aferir autenticidade"))
@@ -1383,6 +1409,7 @@ public class SplitDO  {
 								pagina = linhaBuffer.trim();
 							}
 							if(ehInteiro(ultimaPalavra(linhaBuffer))) {
+								xx = linhaDummy.charAt(0);
 								if(linhaDummy.charAt(0) != ' '){
 									secao = linhaDummy.trim();																													
 									paginaSecao = pagina;
@@ -1869,8 +1896,8 @@ public class SplitDO  {
     	}
     	base.setFileName(nomeFile);
     	
-		SalvaPdf.gravaPdf();
-		GravaXml.main();
+	//	SalvaPdf.gravaPdf();
+	//	gravaXml.main();
     		
     	gravaLog("grv -> " + sequencialSaida + " / " + secao + " / " + grupo + " / " + assunto + " / " + processo);
     	gravaLog(".................... FIM ................................ "+ sequencialSaida);

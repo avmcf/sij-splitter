@@ -15,25 +15,12 @@ public class ValidaData  {
 			boolean eData = false;
 			boolean ehData = false;
 			String data = "";
+			
 			data = obtemData("RECIFE, 5 de marco de 2020.");
+			
 			ehData = ehDataValida(data);
 		//	eData = ehData("30 de Março de 2010");
 			k++;
-		}
-		
-		public static boolean ehInteiro( String s ) {		    
-		    char[] c = s.toCharArray();
-		    boolean d = true;		    
-		    if(s.equals("") || s.equals(" ")){
-		    	return false;
-		    }		    
-		    for ( int i = 0; i < c.length; i++ ){		        
-		        if (!Character.isDigit(c[ i ])) {
-		            d = false;
-		            break;
-		        }
-		    }
-		    return d;
 		}
 
 		public static String obtemData(String linha) {
@@ -52,7 +39,7 @@ public class ValidaData  {
 			meses.add("dezembro");
 			String linhaData = linha;
 			String dataFinal = "";
-			String dummy;
+			String dummy = "";
 			int tamanho = 0;
 			int var = linhaData.split(" ", -1).length - 1;
 			String linhaDecomposta[] = new String[var];
@@ -125,6 +112,21 @@ public class ValidaData  {
 			}
 			
 			return dataFinal;
+		}
+		
+		public static boolean ehInteiro( String s ) {		    
+		    char[] c = s.toCharArray();
+		    boolean d = true;		    
+		    if(s.equals("") || s.equals(" ")){
+		    	return false;
+		    }		    
+		    for ( int i = 0; i < c.length; i++ ){		        
+		        if (!Character.isDigit(c[ i ])) {
+		            d = false;
+		            break;
+		        }
+		    }
+		    return d;
 		}
 		
 		public static boolean ehDataValida(String data) {
