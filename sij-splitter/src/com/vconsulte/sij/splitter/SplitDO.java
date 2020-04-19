@@ -125,6 +125,7 @@ import java.io.FileWriter;
 	import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 	import java.util.ArrayList;
@@ -155,10 +156,9 @@ public class SplitDO  {
 	static File diretorio;
 	static FileWriter arquivo;
 
-	    public static String url = "http://192.168.1.30:8080";		// JAQ
-//	    public static String url = "http://192.168.25.9:8080";		// Catacumba
-	
-//	public static String url = "http://127.0.0.1:8080";
+//	    public static String url = "http://192.168.1.30:8080";		// JAQ
+//	    public static String url = "http://192.168.25.9:8080";		// Catacumba		
+	    public static String url = "http://127.0.0.1:8080";			// Vagrant local
 
     public static String baseFolder = "/Sites/advocacia/documentLibrary/secretaria/carregamento";
     public static String usuario = "sgj";
@@ -171,9 +171,12 @@ public class SplitDO  {
 	static List <String> assuntosUtilizados = new ArrayList<String>();
 	static List <String> continuacoesPossiveis = new ArrayList<String>();
 	static List <String> tabAtores = new ArrayList<String>();
-	static List <String> bufferEntrada = new ArrayList<String>();
+	static List <String> bufferEntrada = new ArrayList<String>()
+			;
+	static Collection<String> bufferSaida = new ArrayList<String>();
 	
 	static ArrayList<String> textoEdital = new ArrayList<String>();
+	static ArrayList<String> textoSaida = new ArrayList<String>();
 	static ArrayList<String> textoIntroducao = new ArrayList<String>();
 	static ArrayList<String> edital = new ArrayList<String>();
 	static ArrayList<String> introducao = new ArrayList<String>();
@@ -192,7 +195,6 @@ public class SplitDO  {
 	static String titulo5 = "";
 	static String rodape = "";
 	static String descricao = "";
-	//static String dtEdicao = "";
 	static String seqEdicao;
 	static String strEdicao;
 	static String secao = "";
@@ -209,7 +211,10 @@ public class SplitDO  {
 	static String intimados = "";
 	static String linha = "";
 	static String linhaAnterior = "";
-	static String cliente = "";
+	
+	// parametros de configuração
+	static String cliente = "";				// Nome do cliente do sistema
+	static String tipoSaida = "TEXTO";		// indica se a saída será PDF ou TXT
 	
 	static Path pathEdicao;
 	static File intermedio;
@@ -239,6 +244,7 @@ public class SplitDO  {
 	static boolean atoresOK = false;
 	static boolean pauta = false;
 	static boolean dtValida = false;
+	
 
 	static MsgWindow msgWindow = new MsgWindow();
 	static InterfaceServidor conexao = new InterfaceServidor();
@@ -295,6 +301,8 @@ public class SplitDO  {
 		//	gravaIntermedio(diarioInput);			// não apagar
 
 			cliente = "Jairo Aquino Advogados";
+			tipoSaida = "TEXTO";
+			
 			carregaDiario(diarioInput);
 			msgWindow.incluiLinha(obtemHrAtual() + " - Preparação para leitura");
 			carregaIndice();
@@ -348,7 +356,7 @@ public class SplitDO  {
 	        		textoEdital.add(linha);
 					seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
     				edital = formataEdital(textoEdital);
-    				salvaEdital((ArrayList<String>) edital);
+    				fechaEdital((ArrayList<String>) edital);
 				}
         		secao = bufferEntrada.get(Indice.linhaSecao);
         		sequencialSecao = Indice.linhaSecao;
@@ -404,7 +412,7 @@ public class SplitDO  {
 							if(!primeiroEdital && textoEdital.size() > 0) {
 								seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
 		        				edital = formataEdital(textoEdital);
-		        				salvaEdital((ArrayList<String>) edital);
+		        				fechaEdital((ArrayList<String>) edital);
 		        				quebraPorAssunto = true;
 							} else {
 								primeiroEdital = false;
@@ -465,13 +473,13 @@ public class SplitDO  {
 									if((textoEdital.size() > 0)){
 										seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
 				        				edital = formataEdital(textoEdital);
-				        				salvaEdital((ArrayList<String>) edital);
+				        				fechaEdital((ArrayList<String>) edital);
 									}						
 								} else {										// se assunto = pauta a quebra é por nº processo
 									if(!atores.isEmpty() && !intimados.isEmpty()){
 										seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
 				        				edital = formataEdital(textoEdital);
-				        				salvaEdital((ArrayList<String>) edital);
+				        				fechaEdital((ArrayList<String>) edital);
 									}
 								}
 								salvarLinha = false;
@@ -515,7 +523,7 @@ public class SplitDO  {
         if(textoEdital.size() > 0){       	
 	        seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
 			edital = formataEdital(textoEdital);
-			salvaEdital((ArrayList<String>) edital);
+			fechaEdital((ArrayList<String>) edital);
 			edital.clear();
 			textoEdital.clear();
         }
@@ -543,6 +551,8 @@ public class SplitDO  {
       System.exit(0);
 	
 	}	// final do metodo main
+	
+
 	
 	public static String obtemData(String linha) {
 		ArrayList<String> meses = new ArrayList<String>();
@@ -1831,34 +1841,34 @@ public class SplitDO  {
 			return -1;
 		}
 		
-		public static void carregaAssuntos() throws IOException{
-			String linha = "";
-			String linhaTratada = "";
-			String [] arrayAssunto;
-	        FileInputStream arquivoIn = new FileInputStream(assuntos);
-			BufferedReader registro = new BufferedReader(new InputStreamReader((arquivoIn), "UTF-8"));
-	        
-	        while(linha != null){
-		    	linha = registro.readLine();
-		    	
-		    	if(linha == null) {
-		    		break;
-		    	} else {
-		    		linhaTratada = formataPalavra(linha);
-		    	}
+	public static void carregaAssuntos() throws IOException{
+		String linha = "";
+		String linhaTratada = "";
+		String [] arrayAssunto;
+        FileInputStream arquivoIn = new FileInputStream(assuntos);
+		BufferedReader registro = new BufferedReader(new InputStreamReader((arquivoIn), "UTF-8"));
+        
+        while(linha != null){
+	    	linha = registro.readLine();
+	    	
+	    	if(linha == null) {
+	    		break;
+	    	} else {
+	    		linhaTratada = formataPalavra(linha);
+	    	}
 
-	    		if(!linhaTratada.contains("PODER JUDICIÁRIO") || linhaTratada.length() != 16){
-	    			if(!tabelaAssuntos.contains(linhaTratada)) {
-	    				tabelaAssuntos.add(linhaTratada);
-	    				arrayAssunto = linhaTratada.split(" ");
-	    				if(arrayAssunto.length > maiorAssunto) {
-	    					maiorAssunto = arrayAssunto.length;
-	    				}
-	    			}	    			
-	    		}	    			    	
-	        }
-	        registro.close();
-		}
+    		if(!linhaTratada.contains("PODER JUDICIÁRIO") || linhaTratada.length() != 16){
+    			if(!tabelaAssuntos.contains(linhaTratada)) {
+    				tabelaAssuntos.add(linhaTratada);
+    				arrayAssunto = linhaTratada.split(" ");
+    				if(arrayAssunto.length > maiorAssunto) {
+    					maiorAssunto = arrayAssunto.length;
+    				}
+    			}	    			
+    		}	    			    	
+        }
+        registro.close();
+	}
 		
 	public static void inicializaEdital() throws Exception {
 		Edital.setTribunal(strTribunal);
@@ -1890,8 +1900,101 @@ public class SplitDO  {
 			e.printStackTrace();
 		}
 	}
+	
+	public static void enviaEdital() throws ParseException, IOException{
 
-	public static boolean salvaEdital(ArrayList<String> texto) throws Exception {
+		int ultimoSequencial = 1;
+		String nomeFile = strTribunal + "-" + seqEdicao + "-" + seqPublicacao + ".txt";
+		base.setFileName(nomeFile);
+		conexao.setFileName(nomeFile);
+				
+		Edital.setTitulo1(titulo1);
+		Edital.setTitulo2(titulo2);
+		Edital.setTitulo3(titulo3);
+		Edital.setTitulo4(titulo4);
+		Edital.setTitulo5(titulo5);
+		Edital.setStrEdicao(strEdicao);
+    	Edital.setVara(secao);
+    	Edital.setGrupo(grupo);
+		Edital.setAssunto(assunto);
+		Edital.setAtores(atores);
+		Edital.setIntimados(intimados);
+    	Edital.setProcesso(processo);
+
+		String linhaTraco =  "-----------------------------------------------------------------------------------------";
+		String linhaRodaPe = "V&C Consultoria / SplitDO " + versaoSplitter ;
+
+		textoSaida.add(titulo1);
+		textoSaida.add(titulo2);
+		textoSaida.add(titulo3);
+		textoSaida.add(titulo4);
+		textoSaida.add(titulo5 + "\n");
+		textoSaida.add(linhaTraco + "\n");
+		textoSaida.add(secao);
+		textoSaida.add(grupo);
+		textoSaida.add(assunto + " " + complementoAssunto  + "\n");
+		textoSaida.add(atores);
+		textoSaida.add(intimados);
+
+		if(introducao.size() > 0) {
+			for(String linha : introducao){
+				textoSaida.add(linha);
+			}
+		}
+
+		if(textoEdital.size() > 0) {
+			for(String linha : textoEdital){
+				textoSaida.add(linha);
+			}
+		}
+
+		textoSaida.add(" \n");
+		textoSaida.add(linhaTraco);
+		textoSaida.add(linhaRodaPe);
+		textoSaida.add(" \n");
+		
+		Edital.setTexto(textoSaida);
+
+		if (InterfaceServidor.incluiEdital(sessao, editalFolder)) {
+			if((sequencialSaida - ultimoSequencial == 100) || sequencialSaida == 1) {
+				ultimoSequencial = sequencialSaida;
+				msgWindow.incluiLinha(obtemHrAtual() + ":" + " Publicação Nº " + sequencialSaida + " Gravado com sucesso");
+				//msgWindow.incluiLinha(primeiraLinha + "\n");
+			}
+			
+		} else {
+			msgWindow.incluiLinha("Houve erro na gravação da publicação Nº " + sequencialSaida + " Gravado com sucesso");
+			finalizaProcesso();
+		}
+		textoSaida.clear();
+		qtdPublicacoes++;
+	}
+	
+	public static void fechaEdital(ArrayList<String> texto) throws Exception, IOException {
+		
+		if(tipoSaida.equals("TEXTO")) {
+			enviaEdital();
+		} else {
+			gravaEdital(texto);
+		}
+		gravaLog(obtemHrAtual() + " grv -> " + sequencialSaida + " / " + secao + " / " + grupo + " / " + assunto + " / " + processo);
+    	gravaLog(obtemHrAtual() + " .................... Publicação gravada .................... "+ sequencialSaida);
+		if(!pauta) {
+			assunto = "";
+		}
+		processoAnterior = processo;
+		processo = "";
+		numProcesso = "";
+		sequencialSaida++;
+		atores = "";
+		intimados = "";
+		textoEdital.clear();
+		atoresOK = false;
+		sequencialAssunto = 0;
+		dtValida = false;
+	}
+
+	public static boolean gravaEdital(ArrayList<String> texto) throws Exception {
 		String nomeFile = strTribunal + "-" + seqEdicao + "-" + seqPublicacao + ".pdf";
 		
 		if(edital.size()<5 && !formataPalavra(assunto).equals("pauta de julgamento")) {
@@ -1930,16 +2033,16 @@ public class SplitDO  {
     	} else Edital.setIntimados("---");
     	
     	Edital.setTexto(edital);
-    	Edital.setTipoDocumento("Publicação");
+    	Edital.setTipoDocumento("publicacao");
     	Edital.setCliente("Jairo Aquino Advogados");
     	if(!textoIntroducao.isEmpty()) {
     		Edital.setIntroducao(formataTexto(textoIntroducao));
     	}
     	base.setFileName(nomeFile);
-    	
+
 		SalvaPdf.gravaPdf();
-		gravaXml.main();
-    		
+		GravaXml.main();
+    /*		
     	gravaLog(obtemHrAtual() + " grv -> " + sequencialSaida + " / " + secao + " / " + grupo + " / " + assunto + " / " + processo);
     	gravaLog(obtemHrAtual() + " .................... Publicação gravada .................... "+ sequencialSaida);
 		if(!pauta) {
@@ -1955,7 +2058,9 @@ public class SplitDO  {
 		textoEdital.clear();
 		atoresOK = false;
 		sequencialAssunto = 0;
-		dtValida = false;                                                	
+		dtValida = false;   
+	*/          
+		edital.clear();
 		return true;
 	}
 		
