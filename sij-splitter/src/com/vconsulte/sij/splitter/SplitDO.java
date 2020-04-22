@@ -153,7 +153,9 @@ public class SplitDO  {
 	static File diarioInput;
 	static File editaisDir;
 	static File assuntos;
+	static File config;
 	static File diretorio;
+	static FileWriter logFile;
 	static FileWriter arquivo;
 
 //	    public static String url = "http://192.168.1.30:8080";		// JAQ
@@ -211,10 +213,12 @@ public class SplitDO  {
 	static String intimados = "";
 	static String linha = "";
 	static String linhaAnterior = "";
+	static String logName = "";
 	
 	// parametros de configuração
 	static String cliente = "";				// Nome do cliente do sistema
 	static String tipoSaida = "TEXTO";		// indica se a saída será PDF ou TXT
+	static String sysOp = "UBUNTU";
 	
 	static Path pathEdicao;
 	static File intermedio;
@@ -245,7 +249,6 @@ public class SplitDO  {
 	static boolean pauta = false;
 	static boolean dtValida = false;
 	
-
 	static MsgWindow msgWindow = new MsgWindow();
 	static InterfaceServidor conexao = new InterfaceServidor();
 	
@@ -299,10 +302,13 @@ public class SplitDO  {
 		msgWindow.montaJanela();
 		try {
 		//	gravaIntermedio(diarioInput);			// não apagar
-
+		/*
 			cliente = "Jairo Aquino Advogados";
-			tipoSaida = "TEXTO";
-			
+			tipoSaida = "DIRETA";
+			sysOp = "UBUNTU";
+			url = "http://127.0.0.1:8080";
+		*/
+			carregaConfig();
 			carregaDiario(diarioInput);
 			msgWindow.incluiLinha(obtemHrAtual() + " - Preparação para leitura");
 			carregaIndice();
@@ -325,7 +331,7 @@ public class SplitDO  {
 		        strEdicao = descricao + "T00:00:00.000-03:00";
 		        titulo4 = bufferEntrada.get(3).trim();
 		        seqEdicao = bufferEntrada.get(3).trim().substring(2, 6);
-		        
+		        logName = diario.getParentFile() + strTribunal + seqEdicao + ".log";
 		        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		        sdf.setLenient(false);
 		        edicao = sdf.parse(descricao);
@@ -1362,6 +1368,7 @@ public class SplitDO  {
         if (diario != null){
     		intermedio = new File(diario.getParentFile()+"/intermedio.txt");
     		assuntos = new File(diario.getParentFile()+"/subjects.txt");
+    		config = new File(diario.getParentFile()+"/split.cnf");
         	diarioInput = diario;
         }
 	}																		// Fim do método InicializaArquivos
@@ -1869,6 +1876,40 @@ public class SplitDO  {
         }
         registro.close();
 	}
+	
+	public static void carregaConfig() throws IOException{
+		String linha = "";
+		String linhaTratada = "";
+		int x = 0;
+        FileInputStream arquivoIn = new FileInputStream(config);
+		BufferedReader registro = new BufferedReader(new InputStreamReader((arquivoIn), "UTF-8"));
+        
+        while(linha != null){
+	    	linha = registro.readLine();
+	    	
+	    	if(linha == null) {
+	    		break;
+	    	} else {
+	    		linhaTratada = formataPalavra(linha);
+	    	}
+	    	switch(x) {
+				case 0:
+					cliente = linha;
+					break;
+				case 1:
+					tipoSaida = linha;
+					break;
+				case 2:
+					sysOp = linha;
+					break;
+				case 3:
+					url = linha;
+					break;
+	    	}
+    		x++;
+        }
+        registro.close();
+	}
 		
 	public static void inicializaEdital() throws Exception {
 		Edital.setTribunal(strTribunal);
@@ -1883,7 +1924,7 @@ public class SplitDO  {
 	
 	public static void abreLog(String nomeArquivo) {
 		try {
-			arquivo = new FileWriter(new File("/Users/avmcf/sij/logs/" + nomeArquivo + ".log"));
+			logFile = new FileWriter(logName);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
