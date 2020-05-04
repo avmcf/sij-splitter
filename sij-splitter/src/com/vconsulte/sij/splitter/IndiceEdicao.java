@@ -9,6 +9,8 @@ public class IndiceEdicao {
 	public String grupo;
 	public int paginaGrupo;
 	public int linhaGrupo;
+	public int indexSecao;
+	public int indexGrupo;
 		
 	public IndiceEdicao(String secao, 
 			int paginaSecao, 
@@ -16,7 +18,9 @@ public class IndiceEdicao {
 			String complementoSecao, 
 			String grupo, 
 			int paginaGrupo,  
-			int linhaGrupo) {
+			int linhaGrupo, 
+			int indexSecao,
+			int indexGrupo) {
 		
 		this.secao = secao;
 		this.paginaSecao = paginaSecao;
@@ -25,6 +29,8 @@ public class IndiceEdicao {
 		this.grupo = grupo;
 		this.paginaGrupo = paginaGrupo;
 		this.linhaGrupo = linhaGrupo;
+		this.indexGrupo = indexGrupo;
+		this.indexSecao = indexSecao;
 	}
 
 	public String getSecao() { 
@@ -81,6 +87,22 @@ public class IndiceEdicao {
 	}
 	public void setLinhaGrupo(int linhaGrupo) { 
 		this.linhaGrupo = linhaGrupo; 
+	}
+	// ------------------------------------
+	
+	public int getIndexGrupo() { 
+		return indexGrupo; 
+	}
+	public void setIndexGrupo(int indexGrupo) { 
+		this.indexGrupo = indexGrupo; 
+	}
+	// ------------------------------------
+	
+	public int getindexSecao() { 
+		return indexSecao; 
+	}
+	public void setIndexSecao(int indexSecao) { 
+		this.indexSecao = indexSecao; 
 	}
 	// ------------------------------------
 		
