@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="sij-splitter/src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sij-base"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/asm-3.3.1.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/chemistry-opencmis-client-api-1.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/chemistry-opencmis-client-bindings-1.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/chemistry-opencmis-client-impl-1.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/chemistry-opencmis-commons-api-1.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/chemistry-opencmis-commons-impl-1.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-core-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-bindings-soap-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-bindings-xml-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-databinding-jaxb-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-frontend-jaxws-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-frontend-simple-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-transports-http-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-ws-addr-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-ws-policy-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/cxf-rt-wsdl-3.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/jaxb-core-2.2.11.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/jaxb-impl-2.2.11.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/neethi-3.0.3.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/slf4j-api-1.7.21.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/stax2-api-3.1.4.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/woodstox-core-asl-4.4.1.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/wsdl4j-1.6.3.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/xml-resolver-1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/xmlschema-core-2.2.1.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/debugger-app-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/fontbox-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/pdfbox-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/pdfbox-app-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/pdfbox-debugger-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/pdfbox-tools-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/preflight-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/preflight-app-2.0.12.jar"/>
+	<classpathentry kind="lib" path="/Users/avmcf/external_libs/pdf20/xmpbox-2.0.12.jar"/>
+	<classpathentry kind="output" path="sij-splitter/bin"/>
+</classpath>
