@@ -103,9 +103,12 @@ package com.vconsulte.sij.splitter;
 //					inclusão do método validaAssunto
 //					inclusão do método contarPalavrasAssunto
 //
-//	versao 2.2.19 	- 27 de Abril de 2020
+//	versao 2.3.20 	- 27 de Abril de 2020
 //					Versão intermediaria para JAQ
 //					Nova lógica de quebra de publicações
+//	
+//	versao 2.3.21 	- 04 de Maio 2020
+//					Correções na justificação do texto
 //					
 //
 //	versao 3.0 	- 	...... de 2019
@@ -138,6 +141,7 @@ import java.text.SimpleDateFormat;
 	import java.util.Collection;
 	import java.util.Date;
 	import java.util.List;
+import java.util.Scanner;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 	import javax.swing.JFileChooser;
@@ -164,9 +168,14 @@ public class SplitDO  {
 	static FileWriter arquivoLog;
 	static FileWriter arqSaida;
 
+	// parametros de configuração
 //	    public static String url = "http://192.168.1.30:8080";		// JAQ
 //	    public static String url = "http://192.168.25.9:8080";		// Catacumba		
 	public static String url = "http://127.0.0.1:8080";				// Vagrant local
+	static String cliente = "V&C Consultoria Ltda";		// Nome do cliente do sistema
+	static String tipoSaida = "TEXTO";					// indica se a saída será PDF ou TXT
+	static String sysOp = "LINUX";
+	static String tipoDocumento = "publicacao";
 
     public static String baseFolder = "/Sites/advocacia/documentLibrary/secretaria/carregamento";
     public static String usuario = "sgj";
@@ -179,7 +188,10 @@ public class SplitDO  {
 	static List <String> assuntosUtilizados = new ArrayList<String>();
 	static List <String> continuacoesPossiveis = new ArrayList<String>();
 	static List <String> tabAtores = new ArrayList<String>();
+	static List <String> palavrasChaves = new ArrayList<String>();
 	static List <String> bufferEntrada = new ArrayList<String>();
+	static List <String> falsoFinal = new ArrayList<String>();
+	
 	static Collection<String> bufferSaida = new ArrayList<String>();
 	
 	static ArrayList<String> textoEdital = new ArrayList<String>();
@@ -187,9 +199,12 @@ public class SplitDO  {
 	static ArrayList<String> textoIntroducao = new ArrayList<String>();
 	static ArrayList<String> edital = new ArrayList<String>();
 	static ArrayList<String> introducao = new ArrayList<String>();
+	static ArrayList<String> paragrafos = new ArrayList<String>();
+	
+	static String textoTeste = "";
 	
     static String editalTexto = "";
-	static String versaoSplitter = "v2.3.20";
+	static String versaoSplitter = "v2.3.21";
 	static String processo = "";
 	static String numProcesso = "";
 	static String processoAnterior = "";
@@ -216,17 +231,13 @@ public class SplitDO  {
 	static String edtFolderName = "";
 	static String secaoAnterior = "";
 	static String linhaFormatada = "";
+	static String linhaParagrafo = "";
 	static String atores = "";
 	static String intimados = "";
 	static String linha = "";
 	static String linhaAnterior = "";
 	static String logFolder = "";
 
-	// parametros de configuração
-	static String cliente = "V&C Consultoria Ltda";		// Nome do cliente do sistema
-	static String tipoSaida = "TEXTO";					// indica se a saída será PDF ou TXT
-	static String sysOp = "LINUX";
-	
 	static Path pathEdicao;
 	static File intermedio;
 	
@@ -280,11 +291,15 @@ public class SplitDO  {
 	@SuppressWarnings("unlikely-arg-type")
 	public static void main(String[] args) throws Exception {
 
-		String strDummy = "";	
+		String strDummy = "";
+		String linhaParagrafo = "";
 		
 		boolean salvarLinha = false;
 		boolean primeiroEdital = true;
 		boolean quebraPorAssunto = false;
+		boolean ignora = false;
+		
+		char ponto = ' ';
 
 		// todos em minúsculo
 		tabAtores.add("advogado");
@@ -313,19 +328,27 @@ public class SplitDO  {
 		tabAtores.add("solicitante");
 		tabAtores.add("terceiro interessado");
 		tabAtores.add("testemunha");
-
+		
+		palavrasChaves.add("fundamentacao");
+		palavrasChaves.add("ementa");
+		palavrasChaves.add("merito");
+		palavrasChaves.add("conclusao");
+		palavrasChaves.add("agravo de instrumento");
+		
+		falsoFinal.add("LTDA.");
+		falsoFinal.add("S/A.");
+		
 		inicializaArquivos();
 		msgWindow.montaJanela();
 		try {
 		
 		//	gravaIntermedio(diarioInput);			// só pra teste não apagar
+		//	lista();								//só pra teste não apagar
+			
 			carregaConfig();
 			carregaDiario(diarioInput);
 			msgWindow.incluiLinha(obtemHrAtual() + " - Preparação para leitura");
 			carregaIndice();
-			
-		//	lista();								//só pra teste não apagar
-			
 			mapeiaLinhas();
 			carregaAssuntos();
 		
@@ -374,10 +397,6 @@ public class SplitDO  {
 	        for (IndiceEdicao Indice : Index) {					// Loop de indice (percorre o indice do documento)		        	
 	        	// NOVA SESSÃO	 ---------------------------------------------------------------------------------
 
-	        	if(sequencial >= 371797) {
-        			k++;
-	        	}
-	        	
 	        	if(!primeiroEdital && textoEdital.size() > 0) {
 	        		textoEdital.add(linha);
 					seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
@@ -409,20 +428,13 @@ public class SplitDO  {
         		gravaLog(obtemHrAtual() + " grp -> " + sequencial + " - novo grupo: " + grupo + " - pg: " + Indice.paginaSecao + " / " + ultimaPagina);
         		limiteGrupo = localizaProximoGrupo(sequencial);
     			quebraPorAssunto = false;
-    			
-    			
-    			
-    			if(sequencial >= 371828) {
-        			k++;
-	        	}
-    			
+
     			assunto = "";
     			quebraPorAssunto = false; 
         		indiceContador++;
     			inicializaEdital();
     			
-    			boolean ignora = false;
-    			
+
 	        	// Início do loop de linhas de assunto corpo  -------------------------------------------------------------------	   
 	        	while((sequencial < limiteGrupo)) {	
 	        		
@@ -458,37 +470,13 @@ public class SplitDO  {
 	        		
 	        		//System.out.println(sequencial + " - " + linha);
 
-	        		if(sequencial >= 371884) {
-	        			k++;
-	        		}
-	        		
-	        		if(sequencial >= 371903) {
-	        			k++;
-	        		}
-	        		
-	        		if(sequencial >= 371922) {
-	        			k++;
-	        		}
-	        		
-	        		if(sequencial >= 371954) {
-	        			k++;
-	        		}
-	        		
-	        		if(sequencial >= 371984) {
-	        			k++;
-	        		}
-	        		
-	        		if(sequencial >= 376853) {
-	        			k++;
-	        		}
-
 					/*	
 					 * Quebra por Assunto
 					 * 
 					 */
 	        		if(tabelaAssuntos.contains(formataPalavra(primeiraPalavra(linha))) && !grupoSemAssunto) {
 	        			if(quebraAssunto(sequencial-1,limiteGrupo)) {
-							if(!primeiroEdital && textoEdital.size() > 0) {
+							if(!primeiroEdital && (textoEdital.size() > 0 || paragrafos.size() > 0)) {
 								seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
 		        				edital = formataEdital(textoEdital);
 		        				fechaEdital((ArrayList<String>) edital);		        				
@@ -503,10 +491,6 @@ public class SplitDO  {
 							quebraPorAssunto = true;
 							gravaLog(obtemHrAtual() + " ass -> " + sequencial + " - " + assunto + " - arquivo --> " + sequencialSaida);
 
-							//if(!verificaSeLinhaTemNumProcesso(carregaLinha(sequencial,false))) {
-	        				//	msgWindow.incluiLinha("----> NO");
-	        				//} 
-	        			
 							if(assunto.equals("Pauta de Julgamento")) {
 								pauta = true;
 							} else {
@@ -526,7 +510,7 @@ public class SplitDO  {
 							continue;
 	        			}
 					}
-	        		
+	        		k++;
 					/*
 					 * Tratamento de introdução do Edital quando houve
 					 * (introdução é um bloco de texto comum a vários editais de um mesmo assunto
@@ -549,9 +533,8 @@ public class SplitDO  {
 						strDummy = obtemNumProcesso(linha);
 						if(!quebraPorAssunto) {
 							if(quebraProcesso(sequencial-1)) {
-
 								if(!pauta) {					  				// se ñ é pauta a quebra é por assunto      								
-									if((textoEdital.size() > 0)){
+									if(!primeiroEdital && (textoEdital.size() > 0 || paragrafos.size() > 0)) {
 										seqPublicacao = completaEsquerda(Integer.toString(sequencialSaida), '0', 4);
 				        				edital = formataEdital(textoEdital);
 				        				fechaEdital((ArrayList<String>) edital);
@@ -580,26 +563,25 @@ public class SplitDO  {
 						atores = trataAtores();
 						if(atores != "") {
 							sequencial--;
-							
-							if(sequencial >= 371845) {		
-			        			k++;
-			        		}
-							
 							intimados = trataIntimados();
 		        			atoresOK = true;
-							k++;
 							continue;
 						}
 					}
 
 					/*
-					 * Registro das linha do texto do Edital
-					 */		        			
+					 * Guarda linha do texto do Edital
+					 */	
+					
         			if(textoEdital.size() == 0) {
         				primeiraLinha = linha;
         			}     
         			if(salvarLinha) {
-        				textoEdital.add(linha);
+        				if(tipoSaida.equals("DIRETA")) {
+        					salvaLinha(linha);					// salva linhas para texto
+        				} else {
+        					textoEdital.add(linha);				// salva linhas pata pdf
+        				}
         			}
 	        		salvarLinha = true;
 	        		strDummy = "";	
@@ -641,6 +623,54 @@ public class SplitDO  {
       System.exit(0);
 	
 	}	// final do metodo main
+	
+	public static void salvaLinha(String linha) {
+		char ponto = linha.charAt(linha.length()-1);
+
+		if(palavrasChaves.contains(formataPalavra(linha))) {
+			if(!linhaParagrafo.isEmpty()) paragrafos.add(linhaParagrafo + "\n");
+			paragrafos.add(linha + "\n");
+			linhaParagrafo = "";
+		} else {
+			if(!verificaDataValida(linha)) {
+				if(ponto == '.') {
+					linhaParagrafo = linhaParagrafo + " " + linha + "\n";
+					paragrafos.add(formataParagrafo(linhaParagrafo));
+					linhaParagrafo = "";
+				} else {
+					if ((linha.charAt(0) >= 'A' && linha.charAt(0) <= 'Z')){
+						if(ponto == '.') {
+							linhaParagrafo = linhaParagrafo + " " + linha + "\n";
+							paragrafos.add(formataParagrafo(linhaParagrafo));
+							linhaParagrafo = "";	
+						} else {
+							if(linhaParagrafo.isEmpty()) {
+								linhaParagrafo = linha;
+							} else {
+								linhaParagrafo = linhaParagrafo + " " + linha;
+							}
+						}
+					} else {
+						linhaParagrafo = linhaParagrafo + " " + linha + "\n";
+					}
+				}
+			} else {
+				paragrafos.add(linhaParagrafo + "\n");
+				paragrafos.add(linha);
+			}
+			
+			if(linhaParagrafo.equals("PODER JUDICIÁRIO")) {
+				paragrafos.add(linhaParagrafo + "\n");
+				linhaParagrafo = "";
+			}
+			
+			if(tabelaAssuntos.contains(formataPalavra(linha))) {
+				paragrafos.add(linhaParagrafo + "\n");
+				paragrafos.add(linha + "\n");
+				linhaParagrafo = "";
+			}
+		}
+	}
 	
 	public static String obtemData(String linha) {
 		ArrayList<String> meses = new ArrayList<String>();
@@ -779,15 +809,9 @@ public class SplitDO  {
 			if(!strDummy.equals(numProcesso)) {
 				if(!formataPalavra(assunto).equals("pauta de julgamento")) {								// se assuto ñ for pauta
 					if(!tabelaAssuntos.contains(formataPalavra(linhaAnterior)) && !assunto.isEmpty()) {		// linha anterior ñ é um assunto válido
-						
-						
 						if(procuraIntimados()) {
 							return true;
 						}
-						
-						
-						
-					//	return false;
 					}	
 				}
 			}
@@ -862,16 +886,13 @@ public class SplitDO  {
 								for(int x=indice; x>=linhaProcesso; x--) {						// regressivo a procura de intimados
 									dummy = formataPalavra(carregaLinha(x,false));
 									if(dummy.isEmpty()) {
-										k++;
 					        			continue;
 					        		}
 									if(x == sequencialGrupo) {
-										k++;
 										break;
 									}
 									if(x == sequencialSecao) {
 										gravaLog(obtemHrAtual() + " --- >> " + sequencial + " - quebra assunto");
-										k++;
 										return true;
 									}
 									dta = obtemData(dummy);
@@ -879,7 +900,6 @@ public class SplitDO  {
 										if(ehDataValida(dta) && dta.length() == 10) {
 											dataInvertida = obtemData(dummy).substring(6, 10) + obtemData(dummy).substring(2, 5);
 											if(strEdicao.startsWith(dataInvertida)) {
-												k++;
 												return true;
 											}
 										}
@@ -887,46 +907,32 @@ public class SplitDO  {
 									if(dummy.equals("poder") || 
 											dummy.equals("judiciario") || 
 											dummy.equals("poder judiciario")){
-										k++;
 										return false;
 									}										
 									if(dummy.equals("intimado(s)/citado(s):")) {
-										k++;
 										return false;
 									}
 									if(verificaSeLinhaTemNumProcesso(dummy)) {
 										gravaLog(obtemHrAtual() + " --- >> " + sequencial + " - quebra assunto");
-										k++;
 										return true;
 									}										
 								}
-								int kk = 0;
-								//for(int x=indice+1; x<=limite; x++) {							// progressivo a procura de nº processo
-								for(int x=indice; x<=limite; x++) {
-									kk = x;
-									
-									if(x >= 371820) {
-										k++;
-									}
-									
+					
+								for(int x=indice; x<=limite; x++) {								// progressivo a procura de nº processo
+
 									dummy = formataPalavra(carregaLinha(x,false));
 									if(dummy.isEmpty()) {
-					        			k++;
 										continue;
 					        		}
 									if(dummy.equals("")) {
-										k++;
 										continue;
 									}
 									if(ehDataValida(obtemData(dummy))) {
-										k++;
-										//return false;
 										return true;
 									}
 									if(verificaSeLinhaTemNumProcesso(dummy)) {
 										if(!assunto.isEmpty() && !processo.isEmpty() && !textoEdital.isEmpty() || (indice == (x-1))) {
 											gravaLog(obtemHrAtual() + " --- >> " + sequencial + " - quebra assunto");
-											k++;
 											return true;
 										}										
 									}
@@ -1047,8 +1053,6 @@ public class SplitDO  {
 		if(linha.contains("&")) {
 			linha = limpaCaracteres(linha);
 		}
-		//String registro = formataPalavra(linha);
-		//registro = registro.replaceAll("[():-]"," ");
 		String dummy = "";
 
 		while(!saida) {
@@ -1088,15 +1092,11 @@ public class SplitDO  {
 					pto = linha.charAt(linha.length()-1);
 					linha = carregaLinha(sequencial,true);
 					linha = linha.replaceAll("&[():-]"," ");
-					//if(linha.contains("&")) {
-					//	linha = limpaCaracteres(linha);
-					//}
+					registro = formataPalavra(linha);
+					registro = registro.replaceAll("[():-]"," ");
 		    	}
 			}
 			linha = carregaLinha(sequencial,true);
-			//if(linha.contains("&")) {
-			//	linha = limpaCaracteres(linha);
-			//}
 		}	
 		sequencial--;		
 		return bloco;
@@ -1199,19 +1199,6 @@ public class SplitDO  {
 										saida = true;
 										break;
 									} 
-								/*
-									else {		
-										linha = carregaLinha(sequencial,true);
-										if(linha.contains("&")) {
-											linha = limpaCaracteres(linha);
-										}
-										if(verificaSemelhanca(linha,secao)){
-											saida = true;
-											break;
-										}
-									}
-								*/
-									
 								}
 								linha = carregaLinha(sequencial,true);
 								if(linha.contains("&")) {
@@ -2146,10 +2133,12 @@ public class SplitDO  {
 		//	fileW = (FileWriter) new OutputStreamWriter(new FileOutputStream(fileW), StandardCharsets.UTF_8);
 		//	fileW = (FileWriter) new OutputStreamWriter(new FileOutputStream("/Users/avmcf/SIJ/_DOS/lista.txt"), StandardCharsets.UTF_8);
 			//for (IndiceEdicao Indice : Index) {
-			for (int x = 0; x <= bufferEntrada.size()-1; x++) {
+			//for (int x = 0; x <= bufferEntrada.size()-1; x++) {
+			for (int x = 0; x <= paragrafos.size()-1; x++) {
 				//buffW.write (Indice.secao + " - " + Indice.linhaSecao + " - " + Indice.grupo + " - " + Indice.linhaGrupo);
-				buffW.write (x + " - " + bufferEntrada.get(x));
-				buffW.newLine ();
+				//buffW.write (x + " - " + paragrafos.get(x));
+				buffW.write (paragrafos.get(x));
+				//buffW.newLine ();
 			}
 	        buffW.close ();
 		} catch (IOException io)
@@ -2221,8 +2210,8 @@ public class SplitDO  {
 			}
 		}
 
-		if(textoEdital.size() > 0) {
-			for(String linha : textoEdital){
+		if(paragrafos.size() > 0) {
+			for(String linha : paragrafos){
 				textoSaida.add(linha);
 			}
 		}
@@ -2253,10 +2242,8 @@ public class SplitDO  {
 	public static void fechaEdital(ArrayList<String> texto) throws Exception, IOException {
 		
 		if(tipoSaida.equals("DIRETA")) {
-			if(sequencialSaida >= 5452) {
-				enviaEdital();
-			}
-			
+
+			enviaEdital();
 		} else {
 			gravaEdital(texto);
 		}
@@ -2308,9 +2295,9 @@ public class SplitDO  {
     		Edital.setIntimados(intimados);
     	} else Edital.setIntimados("---");
     	
-    	Edital.setTexto(edital);
-    	Edital.setTipoDocumento("publicacao");
-    	Edital.setCliente("Jairo Aquino Advogados");
+    	Edital.setTexto(formataTexto(edital));
+    	Edital.setTipoDocumento(tipoDocumento);
+    	Edital.setCliente(cliente);
     	if(!textoIntroducao.isEmpty()) {
     		Edital.setIntroducao(formataTexto(textoIntroducao));
     	}
@@ -2318,25 +2305,7 @@ public class SplitDO  {
 
 		SalvaPdf.gravaPdf();
 		GravaXml.main();
-		gravaLog(obtemHrAtual() + "Publicação " + sequencialSaida + " / " + secao + " / " + grupo + " / " + assunto + " / " + processo);
-    /*		
-    	
-    	
-		if(!pauta) {
-			assunto = "";
-		}
-		processoAnterior = processo;
-		processo = "";
-		numProcesso = "";
-		sequencialSaida++;
-		atores = "";
-		intimados = "";
-		edital.clear();
-		textoEdital.clear();
-		atoresOK = false;
-		sequencialAssunto = 0;
-		dtValida = false;   
-	*/          
+		gravaLog(obtemHrAtual() + "Publicação " + sequencialSaida + " / " + secao + " / " + grupo + " / " + assunto + " / " + processo);        
 		edital.clear();
 		return true;
 	}
@@ -2649,6 +2618,56 @@ public class SplitDO  {
 	            System.out.println(ex);
 	        }
 	    }
+		
+		public static String formataParagrafo(String texto) {
+			
+			String linha = "";
+			String palavra = "";
+			String textoJustificado = "";
+			int limite = 100;
+			int espacosFaltantes = 0;
+			char ponto;
+			Scanner s = new Scanner(texto);
+
+			while(s.hasNext()) {
+				
+				palavra = s.next().trim();
+				ponto = palavra.charAt(palavra.length()-1);
+
+				if((linha.length() + palavra.length() + 1) > limite) {
+					
+					if(ponto == '.' && !falsoFinal.contains(palavra)) {
+						if(textoJustificado.isEmpty()) {
+							textoJustificado = linha + " " + palavra + "\n";
+							linha = "";
+
+						} else {
+							textoJustificado = palavra + "\n";
+						}
+					} else {
+						espacosFaltantes = limite - linha.length();
+						textoJustificado = textoJustificado + linha + " " + palavra + "\n";
+						linha = ""; 																	// criou nova linha
+					}
+				} else {
+					if(ponto == '.' && !falsoFinal.contains(palavra)) {
+						if(linha.isEmpty()) {
+							textoJustificado = palavra + "\n";
+						} else {
+							textoJustificado = textoJustificado + linha + " " + palavra + "\n";
+							linha = "";
+						}
+					} else {
+						if(linha.isEmpty()) {
+							linha = palavra;
+						} else {
+							linha = linha + " " + palavra;
+						}		
+					}
+				} 
+			}
+			return textoJustificado;
+		}
 		
 		public static ArrayList<String> formataTexto(ArrayList<String> texto) {
 			

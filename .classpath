@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="sij-splitter/src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sij-base"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/asm-3.3.1.jar"/>
 	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/chemistry-opencmis-client-api-1.1.0.jar"/>
 	<classpathentry kind="lib" path="/Users/avmcf/external_libs/chemistry/chemistry-opencmis-client-bindings-1.1.0.jar"/>
