@@ -127,7 +127,8 @@ package com.vconsulte.sij.splitter;
 //					- Correção na quebra das publicações com assunto Pauta
 //					- Ajustes no método trataIntimados
 //					
-//					
+//	versao 2.3.21d	- 18 de Junho 2020v2.3.21d		
+//					- versão provivisoria sem o controle de nº de página
 //
 //					
 //
@@ -403,13 +404,16 @@ public class SplitDO  {
 	        File dir1 = new File (".");
 	        abreLog(dir1 + "/" + strTribunal+seqEdicao + ".log");
 	        gravaLog(obtemHrAtual() + " ini -> " + tribunal + " - " + descricaoFolder);
-	        
-	        for(int x=0; x <= Indice.linhaSecao; x++) {
-	        	intDummy = obtemPagina(bufferEntrada.get(x));
-	        	if(intDummy != 0) {
-	        		pagina = intDummy ;
-	        	}
-	        }
+
+	       // for(int x=0; x <= Indice.linhaSecao; x++) {
+	       // 	if(primeiraPalavra(bufferEntrada.get(x)).matches("\\d{4}\\W\\d{4}")){ 
+		//			pagina = obtemPagina(bufferEntrada.get(x));
+		//			break;
+		//		}
+	      //  }
+	      //  if(intDummy != 0) {
+        //		pagina = intDummy ;
+       // 	}
 
 	        for (IndiceEdicao Indice : Index) {					// Loop de indice (percorre o indice do documento)		        	
 
@@ -481,12 +485,17 @@ public class SplitDO  {
 	        		salvarLinha = true;
 	        		linhaAnterior = linha;
 	        		linha = carregaLinha(sequencial,true);
-	        		
-	        		intDummy = obtemPagina(linha);
-		        	if(intDummy != 0) {
-		        		pagina = intDummy ;
-		        	}
-	        		
+	        	/*
+	        		for(int x=0; x <= Indice.linhaSecao; x++) {
+	    	        	if(primeiraPalavra(linha).matches("\\d{4}\\W\\d{4}")){ 
+	    					pagina = obtemPagina(bufferEntrada.get(x));
+	    					break;
+	    				}
+	    	        }
+	    	        if(intDummy != 0) {
+	            		pagina = intDummy ;
+	            	}
+	        	*/
 	        		if(verificaSeLinhaTemNumProcesso(linha)) {
 	        			processoDummy = obtemNumeroProcesso(linha);
 	        		} else {
@@ -912,7 +921,12 @@ public class SplitDO  {
 				minusculos++;
 			}
 		}
-		percentual = (float) (minusculos*100/dummy.length());
+		if(minusculos > 0) {
+			percentual = (float) (minusculos*100/dummy.length());
+		} else {
+			return true;
+		}
+		
 		if(percentual >= 5.0) {
 			return false;
 		} else {
@@ -1991,9 +2005,9 @@ deve ser uma data final					return true;
 						bufferEntrada.get(in).startsWith("Data da Disponibilização:") ||
 						primeiraPalavra(bufferEntrada.get(in)).matches("\\d{4}\\W\\d{4}") ||
 								(bufferEntrada.get(in).trim().equals("") || bufferEntrada.get(in).trim().isEmpty())){
-					if(primeiraPalavra(bufferEntrada.get(ix)).matches("\\d{4}\\W\\d{4}")){ 
-						pagina = obtemPagina(bufferEntrada.get(ix));
-					}
+					//if(primeiraPalavra(bufferEntrada.get(ix)).matches("\\d{4}\\W\\d{4}")){ 
+					//	pagina = obtemPagina(bufferEntrada.get(ix));
+					//}
 					in++;
 					continue;
 				} else {
@@ -2076,7 +2090,11 @@ deve ser uma data final					return true;
 		} else {
 			strPagina = "0";
 		}
-		return Integer.parseInt(strPagina);
+		if(strPagina.isEmpty()) {
+			return 0;
+		} else {
+			return Integer.parseInt(strPagina);
+		}
 	}
 	
 	private static String carregaLinhaIndice() {
@@ -3856,7 +3874,7 @@ deve ser uma data final					return true;
 			textoSaida.add(linhaParagrafo);
 		}
 
-		textoSaida.add("\n" + "Página " + pagina + " do Diario Oficial TRT " + strTribunal + "ª Região / Edição: " + dataEdicao);
+		//textoSaida.add("\n" + "Página " + pagina + " do Diario Oficial TRT " + strTribunal + "ª Região / Edição: " + dataEdicao);
 		textoSaida.add("(S:" + sequencialSecao + "/G:" + sequencialGrupo + "/A:" + sequencialAssunto + "/P:" + sequencialProcesso + ")");
 		textoSaida.add(linhaTraco);
 		textoSaida.add(linhaRodaPe);
